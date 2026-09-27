@@ -404,7 +404,7 @@ enum SettingsDirectory {
                                       keywords: [s.hotkeyToggle]),
                 SettingsDirectoryItem(page: .advanced, title: s.tabAdvanced, icon: "wrench.and.screwdriver"),
                 SettingsDirectoryItem(page: .about, title: s.tabAbout, icon: "info.circle",
-                                      keywords: [s.reviewIntro, s.reviewHighlights]),
+                                      keywords: [s.reviewIntro]),
                 SettingsDirectoryItem(page: .releaseNotes, title: s.tabReleaseNotes, icon: "sparkles"),
                 SettingsDirectoryItem(page: .support, title: s.tabSupport, icon: "heart.fill",
                                       keywords: [s.donateButton, s.supportIntroStarButton,

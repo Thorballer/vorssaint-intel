@@ -1596,12 +1596,6 @@ enum SwitcherModelFeatureTests {
                < DockPreviewSupport.openDelay(
                    milliseconds: DockPreviewSupport.openDelayMillisecondsRange.lowerBound),
                "a switch, reading its window list inline, still lands before the shortest fresh open")
-        suite.expect(registeredDefaults[DefaultsKey.autoCheckUpdates] as? Bool == true,
-               "update checks are on for clean installs")
-        suite.expect(registeredDefaults[DefaultsKey.updateShowcaseIntroVersion] as? String == "",
-               "update showcase intro starts unseen")
-        suite.expect(registeredDefaults[DefaultsKey.updateShowcaseMediaOverride] as? String == "",
-               "update showcase media override is empty by default")
         suite.expect(SupportUpdateIntroInfo.releaseVersion == "3.3.2",
                "support prompt is deliberately pinned to 3.3.2")
         suite.expect(SupportUpdateIntroInfo.shouldShow(appVersion: "3.3.2", lastSeenVersion: "3.3.1"),
@@ -1639,24 +1633,6 @@ enum SwitcherModelFeatureTests {
                "every app version needs its own incremented bundle build")
         suite.expect(SupportUpdateIntroInfo.releaseVersion == "3.3.2",
                "the support prompt remains deliberately pinned to 3.3.2")
-        suite.expect(UpdateHighlightsInfo.releaseVersion == "3.4.0-beta.1",
-               "the prepared tour belongs to the first 3.4 beta without changing the installed version")
-        for version in ["3.4.0-beta.1", "3.4.0-beta.2", "3.4.0-beta.2.1", "3.4.0-beta.3", "3.4.0-beta.4", "3.4.0-beta.5", "3.4.0-beta.10"] {
-            suite.expect(UpdateHighlightsInfo.shouldShow(appVersion: version, lastSeenVersion: nil)
-                   && UpdateHighlightsInfo.shouldShow(appVersion: version, lastSeenVersion: "3.3.3"),
-                   "the notch tour introduces this beta cycle to new and returning users")
-            suite.expect(!UpdateHighlightsInfo.shouldShow(appVersion: version, lastSeenVersion: UpdateHighlightsInfo.releaseVersion),
-                   "the beta tour does not repeat after it has been seen")
-            suite.expect(!SupportUpdateIntroInfo.shouldShow(appVersion: version, lastSeenVersion: nil),
-                   "beta updates do not request the support and social introduction")
-        }
-        for version in ["3.3.5", "3.4.0", "3.4.1", "3.4.0-rc.1", "3.4.0-beta.0", "3.4.0-beta.no", "3.4.0-beta.2.no", "3.4.0-beta.2.1.1", "3.5.0-beta.1", "4.0.0"] {
-            suite.expect(!UpdateHighlightsInfo.matchesRelease(version)
-                   && !UpdateHighlightsInfo.shouldShow(appVersion: version, lastSeenVersion: nil),
-                   "previewing from the current build and other release cycles cannot consume the future beta tour")
-        }
-        suite.expect(FileManager.default.fileExists(atPath: "Resources/Images/highlights-notch.png"),
-               "the notch tour bundles its static layout illustration")
         suite.expect(registeredDefaults[DefaultsKey.mixerLowerVolumeOnHeadphonesDisconnect] as? Bool == false,
                "headphone disconnect volume lowering is opt-in")
         suite.expect(registeredDefaults[DefaultsKey.mixerHeadphonesDisconnectVolumePercent] as? Int

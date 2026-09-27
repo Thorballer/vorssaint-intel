@@ -9,7 +9,6 @@ struct NotchView: View {
     @ObservedObject private var l10n = L10n.shared
     @ObservedObject private var music = NotchMusicService.shared
     @ObservedObject private var launcher = QuickLauncherService.shared
-    @ObservedObject private var updates = UpdateService.shared
     @AppStorage(DefaultsKey.notchLiquidGlassEnabled) private var glass = false
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -360,22 +359,13 @@ struct NotchView: View {
         .frame(height: service.expandedGeometry.headerRowHeight)
         .contentShape(Rectangle())
         .onHover { headerHovered = $0 }
-        .onAppear { UpdateService.shared.checkIfStale() }
         // Collapsing under the pointer takes the row away without a final
         // hover(false); the next opening starts with the actions out of sight.
         .onDisappear { headerHovered = false }
     }
 
     private var cameraHeaderActions: some View {
-        ViewThatFits(in: .horizontal) {
-            cameraHeaderActions(compactUpdate: false).fixedSize(horizontal: true, vertical: false)
-            cameraHeaderActions(compactUpdate: true).fixedSize(horizontal: true, vertical: false)
-        }
-    }
-
-    private func cameraHeaderActions(compactUpdate: Bool) -> some View {
         HStack(spacing: 6) {
-            NotchUpdateControl(action: service.showUpdate, compact: compactUpdate)
             Menu {
                 if service.selected == .tools, !showsDetail, !service.showingSections, launcher.activeUtility == nil {
                     Button(text.customizeTools) { launcher.isEditing.toggle() }
@@ -399,10 +389,8 @@ struct NotchView: View {
     /// The fade follows the value instead of the hover callback's transaction,
     /// which reached the screen without its animation once the island was key.
     private func headerActions(quickActions: [NotchQuickAction]) -> some View {
-        let updating = updates.state.isInProgress
-        let revealed = headerHovered || updating
+        let revealed = headerHovered
         return HStack(spacing: 6) {
-            NotchUpdateControl(action: service.showUpdate)
             if service.selected == .tools, !service.showingAppPanel, !service.showingSections, service.selectedMetric == nil,
                !service.modules.isEmpty, launcher.activeUtility == nil {
                 NotchIconButton(symbol: launcher.isEditing ? "checkmark" : "slider.horizontal.3",
@@ -427,11 +415,6 @@ struct NotchView: View {
         .overlay(alignment: .trailing) {
             if !revealed {
                 HStack(spacing: 5) {
-                    if case .available(let version) = updates.state {
-                        Circle()
-                            .fill(UpdateServiceSupport.SemanticVersion(raw: version)?.isPrerelease == true ? Color.orange : Color.blue)
-                            .frame(width: 6, height: 6)
-                    }
                     // A kept-open island says so at rest, not only under the pointer.
                     if service.pinned {
                         Image(systemName: "pin.fill")
@@ -516,16 +499,6 @@ private struct NotchFanControlView: View {
 
     var body: some View {
         FanControlSection(collapsible: false, fallbackFanSpeeds: monitor.snapshot.fanSpeeds)
-    }
-}
-
-private extension UpdateService.State {
-    /// A download or install stays in view; an offer waits behind the dot.
-    var isInProgress: Bool {
-        switch self {
-        case .downloading, .installing: return true
-        default: return false
-        }
     }
 }
 

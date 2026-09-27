@@ -174,11 +174,6 @@ final class StatusItemController {
             }
             .store(in: &cancellables)
 
-        UpdateService.shared.$state
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.updateIconAppearance() }
-            .store(in: &cancellables)
-
         MicMuteService.shared.$isMuted
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.updateIconAppearance() }
@@ -327,8 +322,8 @@ final class StatusItemController {
         updateIconAppearance()
     }
 
-    /// Reflects keep-awake state and an available update in the icon. Updates
-    /// keep the blue attention glyph; an active session uses the chosen icon.
+    /// Reflects keep-awake state in the icon; an active session uses the
+    /// chosen icon.
     /// With the mute indicator option on, a red slashed mic joins the glyph
     /// while the microphone is muted, whatever the underlying state. The
     /// glyph can also hide entirely while metrics render in the title (user
@@ -337,16 +332,10 @@ final class StatusItemController {
     private func updateIconAppearance() {
         guard let button = statusItem?.button else { return }
         let defaults = UserDefaults.standard
-        let updateAvailable: Bool
-        if case .available = UpdateService.shared.state {
-            updateAvailable = true
-        } else {
-            updateAvailable = false
-        }
         let micBadgeActive = renderedMicBadgeActive
         let optionEnabled = defaults.bool(forKey: DefaultsKey.menuBarHideIconWithMetrics)
         let separateMetrics = defaults.bool(forKey: DefaultsKey.menuBarSeparateMetrics)
-        let signal = updateAvailable || micBadgeActive
+        let signal = micBadgeActive
         let islandHides = MenuBarSpacingSupport.islandHidesStatusIcon(
             in: defaults, hiddenInFullscreen: islandHiddenInFullscreen) && !signal
         let hidden = islandHides || MenuBarSpacingSupport.shouldHideStatusIcon(
@@ -372,7 +361,7 @@ final class StatusItemController {
         // refresh() runs on every monitor tick and lands here; re-rendering
         // the same image every 2 seconds would be wasted composition, so the
         // image is only touched when some ingredient actually changed.
-        let stateKey = [String(hidden), String(mainItemHidden), String(updateAvailable),
+        let stateKey = [String(hidden), String(mainItemHidden),
                         String(keepAwakeActive), KeepAwakeIconTint.current.rawValue,
                         KeepAwakeActiveIcon.current.rawValue,
                         String(micBadgeActive)].joined(separator: "|")
@@ -387,12 +376,7 @@ final class StatusItemController {
             button.image = Self.emptyStatusImage
             return
         }
-        let stateImage: NSImage?
-        if updateAvailable {
-            stateImage = BlackHoleGlyph.attentionImage()
-        } else {
-            stateImage = BlackHoleGlyph.image(active: keepAwakeActive)
-        }
+        let stateImage = BlackHoleGlyph.image(active: keepAwakeActive)
         if micBadgeActive {
             button.image = BlackHoleGlyph.micMutedImage(over: stateImage) ?? stateImage
         } else {
@@ -503,13 +487,7 @@ final class StatusItemController {
             // would be pure dead padding on the item's left edge. Same
             // decision inputs as updateIconAppearance, with a sentinel length:
             // the title is known non-empty on this branch.
-            let updateAvailable: Bool
-            if case .available = UpdateService.shared.state {
-                updateAvailable = true
-            } else {
-                updateAvailable = false
-            }
-            let signal = updateAvailable || renderedMicBadgeActive
+            let signal = renderedMicBadgeActive
             let glyphHidden = (MenuBarSpacingSupport.islandHidesStatusIcon(
                 in: defaults, hiddenInFullscreen: islandHiddenInFullscreen) && !signal)
                 || MenuBarSpacingSupport.shouldHideStatusIcon(

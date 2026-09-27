@@ -258,7 +258,6 @@ struct Strings {
     let adminPromptClamshellOn: String
     let adminPromptClamshellOff: String
     let adminPromptRecover: String
-    let adminPromptUpdate: String
     let adminPromptSudoersInstall: String
     let adminPromptSudoersRemove: String
 
@@ -271,7 +270,6 @@ struct Strings {
     let tabAdvanced: String
     let tabAbout: String
     let tabReleaseNotes: String
-    let releaseNotesOnUpdateToggle: String
     let minimalWindowPreviews: String
     let minimalWindowPreviewsCaption: String
     let previewSizeLabel: String
@@ -806,25 +804,10 @@ struct Strings {
     let audioPriorityCaption: String
 
     // MARK: Settings — updates
-    let updatesSection: String
     let autoCheckToggle: String
-    let includeBetaUpdatesToggle: String
-    let includeBetaUpdatesCaption: String
     let betaBadgeLabel: String
-    let checkNowButton: String
-    let updateChecking: String
-    let updateUpToDate: String
-    let updateAvailablePrefix: String  // + version
-    let updateInstallButton: String
-    let updateDownloading: String
-    let updateInstalling: String
-    let updateFailedPrefix: String
-    let updateLastChecked: String
-    let updateNotifyTitle: String
-    let updateInstallFailedBody: String
     let updateNeedsApplicationsTitle: String
     let updateNeedsApplicationsBody: String
-    let menuCheckUpdates: String
 
     // MARK: Permissions (shared by Settings & onboarding)
     let permissionRequired: String
@@ -981,8 +964,6 @@ struct Strings {
     let monitorGraphsCaption: String
 
     // MARK: Update notification + onboarding menu bar setup
-    let updateBannerTitle: String
-    let updateBannerAction: String
     let obStepMenuBarTitle: String
     let obStepMenuBarBody: String
     let obStepMenuBarNote: String
@@ -1098,10 +1079,6 @@ struct Strings {
     let homebrewOfficialIntroMigrationTitle: String
     let homebrewOfficialIntroMigrationMessage: String
     let homebrewOfficialIntroCopyButton: String
-    let updateShowcaseTitle: String
-    let updateShowcaseMessage: String
-    let updateShowcaseUnavailable: String
-    let updateShowcaseRestart: String
     let showMenuBarIcon: String
     let menuBarIconStillHiddenTitle: String
     let menuBarIconStillHiddenBody: String
@@ -1198,22 +1175,6 @@ struct Strings {
     let qrResultTitle: String
     let qrResultCopy: String
     let qrResultOpen: String
-    let highlightsTitle: String
-    let highlightsTitleClipboardRedesign: String
-    let highlightsTitleWindowLayout: String
-    let highlightsTitleQuitProtection: String
-    let highlightsTitleRecorderBlur: String
-    let highlightsCaptionDockPreview: String
-    let highlightsCaptionScreenshot: String
-    let highlightsCaptionSnippetLibrary: String
-    let highlightsCaptionCapturePalette: String
-    let highlightsCaptionClipboardRedesign: String
-    let highlightsCaptionWindowLayout: String
-    let highlightsCaptionQuitProtection: String
-    let highlightsCaptionRecorderBlur: String
-    let highlightsConfigure: String
-    let highlightsTry: String
-    let highlightsSeeAll: String
     let switcherCurrentSpaceOnly: String
     let switcherCurrentSpaceOnlyCaption: String
     let shelfFileMissing: String
@@ -1382,7 +1343,6 @@ extension Strings {
         adminPromptClamshellOn: "O Vorssaint precisa da sua senha para manter o Mac ativo com a tampa fechada.",
         adminPromptClamshellOff: "O Vorssaint precisa da sua senha para reativar a suspensão normal do Mac.",
         adminPromptRecover: "O Vorssaint foi encerrado com a suspensão do Mac desativada. Digite a senha para restaurar a suspensão normal.",
-        adminPromptUpdate: "O Vorssaint precisa da sua senha para instalar a atualização.",
         adminPromptSudoersInstall: "O Vorssaint vai criar uma regra restrita (somente pmset disablesleep) para alternar a tampa fechada sem pedir senha. Esta é a única vez que a senha será necessária.",
         adminPromptSudoersRemove: "O Vorssaint vai remover a regra de tampa fechada sem senha.",
 
@@ -1394,7 +1354,6 @@ extension Strings {
         tabAdvanced: "Avançado",
         tabAbout: "Sobre",
         tabReleaseNotes: "Novidades",
-        releaseNotesOnUpdateToggle: "Mostrar novidades ao atualizar",
         minimalWindowPreviews: "Prévias minimalistas",
         minimalWindowPreviewsCaption: "Oculta títulos, botões e detalhes decorativos nas prévias do Dock e do alternador. A seleção continua visível.",
         previewSizeLabel: "Tamanho dos previews",
@@ -1906,25 +1865,10 @@ extension Strings {
         audioPriorityCurrent: "Em uso",
         audioPriorityCaption: "Os dispositivos são selecionados por ordem de prioridade. Quando um dispositivo de maior prioridade é conectado, ele passa a ser usado. Quando o dispositivo ativo é desconectado, o próximo disponível é selecionado.",
 
-        updatesSection: "Atualizações",
         autoCheckToggle: "Procurar atualizações automaticamente",
-        includeBetaUpdatesToggle: "Receber atualizações beta",
-        includeBetaUpdatesCaption: "Versões beta incluem novidades em desenvolvimento e podem apresentar instabilidades ou comportamentos incompletos.",
         betaBadgeLabel: "Beta",
-        checkNowButton: "Procurar agora",
-        updateChecking: "Procurando…",
-        updateUpToDate: "Você está na versão mais recente.",
-        updateAvailablePrefix: "Atualização disponível:",
-        updateInstallButton: "Baixar e instalar",
-        updateDownloading: "Baixando atualização…",
-        updateInstalling: "Instalando e reiniciando…",
-        updateFailedPrefix: "Não foi possível verificar:",
-        updateLastChecked: "Última verificação:",
-        updateNotifyTitle: "Atualização do Vorssaint",
-        updateInstallFailedBody: "A atualização foi baixada, mas não pôde ser aplicada. Baixe a versão mais recente na página de releases do GitHub e arraste o app por cima do atual.",
         updateNeedsApplicationsTitle: "Mova o Vorssaint para Aplicativos",
         updateNeedsApplicationsBody: "O app está rodando de um lugar que não dá para atualizar, como a imagem de disco ou uma área temporária do sistema. Arraste o Vorssaint para a pasta Aplicativos, abra de lá e tente de novo.",
-        menuCheckUpdates: "Procurar atualizações…",
 
         permissionRequired: "Permissão necessária",
         permissionAccessibility: "Acessibilidade",
@@ -2071,8 +2015,6 @@ extension Strings {
         monitorGraphsSection: "Gráficos",
         monitorGraphsCaption: "Escolha quais métricas mostram um gráfico ao longo do tempo.",
 
-        updateBannerTitle: "Atualização disponível",
-        updateBannerAction: "Atualizar",
         obStepMenuBarTitle: "Métricas na barra de menus",
         obStepMenuBarBody: "Escolha o que mostrar ao lado do ícone. A prévia acima muda em tempo real.",
         obStepMenuBarNote: "Novidade: blocos de Rede e Energia e gráficos no painel. Ajuste tudo depois em Ajustes › Monitor.",
@@ -2184,10 +2126,6 @@ extension Strings {
         homebrewOfficialIntroMigrationTitle: "Usava o tap antigo?",
         homebrewOfficialIntroMigrationMessage: "Remova o tap uma vez. O app e seus ajustes continuam no lugar.",
         homebrewOfficialIntroCopyButton: "Copiar comando",
-        updateShowcaseTitle: "Novidades da 3.1.4",
-        updateShowcaseMessage: "Veja uma prévia rápida das principais melhorias desta atualização.",
-        updateShowcaseUnavailable: "Não foi possível carregar o vídeo agora. Você ainda pode continuar.",
-        updateShowcaseRestart: "Voltar ao início",
         showMenuBarIcon: "Mostrar ícone na barra de menus",
         menuBarIconStillHiddenTitle: "O ícone continua escondido",
         menuBarIconStillHiddenBody: "O ícone foi recriado, mas o macOS não deu um lugar visível a ele. A barra de menus provavelmente está sem espaço: remova alguns ícones da barra (ou feche apps com menus longos) e tente de novo.",
@@ -2278,22 +2216,6 @@ extension Strings {
         qrResultTitle: "QR code",
         qrResultCopy: "Copiar",
         qrResultOpen: "Abrir link",
-        highlightsTitle: "Novidades desta versão",
-        highlightsTitleClipboardRedesign: "Novo visual da área de transferência",
-        highlightsTitleWindowLayout: "Organização de janelas",
-        highlightsTitleQuitProtection: "Proteção de ⌘Q e ⌘W",
-        highlightsTitleRecorderBlur: "Desfoque no gravador de tela",
-        highlightsCaptionDockPreview: "O Dock Preview agora funciona com a ampliação do Dock ligada",
-        highlightsCaptionScreenshot: "A captura de tela ganhou uma lupa de pixels e leitura de QR codes",
-        highlightsCaptionSnippetLibrary: "Um menu de snippets com busca digita qualquer snippet direto no cursor",
-        highlightsCaptionCapturePalette: "Um único atalho agora abre uma paleta flutuante para capturas, gravações, texto na tela e cores com ajustes por perto.",
-        highlightsCaptionClipboardRedesign: "O histórico agora abre como uma paleta compacta, com linhas limpas e prévia sob demanda para ler ou editar o item completo.",
-        highlightsCaptionWindowLayout: "Use o anel direcional com atalho e ponteiro para posicionar janelas, ou arraste até as bordas da tela para encaixar com margens personalizadas.",
-        highlightsCaptionQuitProtection: "Evite fechar aplicativos ou janelas por engano exigindo segurar a tecla, tocar duas vezes ou usar um atalho extra, ajustável por aplicativo.",
-        highlightsCaptionRecorderBlur: "Oculte dados confidenciais, senhas e informações privadas em qualquer trecho do seu vídeo gravado antes de salvar ou exportar.",
-        highlightsConfigure: "Configurar",
-        highlightsTry: "Experimentar",
-        highlightsSeeAll: "Ver todas as mudanças",
         switcherCurrentSpaceOnly: "Mostrar só a Mesa atual",
         switcherCurrentSpaceOnlyCaption: "Mostra no alternador apenas as janelas da Mesa em que você está. Escolher uma janela nunca leva você para outra Mesa.",
         shelfFileMissing: "O arquivo não existe mais",
@@ -2463,7 +2385,6 @@ extension Strings {
         adminPromptClamshellOn: "Vorssaint needs your password to keep the Mac going with the lid closed.",
         adminPromptClamshellOff: "Vorssaint needs your password to restore the Mac’s normal sleep.",
         adminPromptRecover: "Vorssaint quit while the Mac’s sleep was disabled. Enter the password to restore normal sleep.",
-        adminPromptUpdate: "Vorssaint needs your password to install the update.",
         adminPromptSudoersInstall: "Vorssaint will create a restricted rule (pmset disablesleep only) to toggle closed-lid mode without asking for a password. This is the only time the password is needed.",
         adminPromptSudoersRemove: "Vorssaint will remove the password-free closed-lid rule.",
 
@@ -2475,7 +2396,6 @@ extension Strings {
         tabAdvanced: "Advanced",
         tabAbout: "About",
         tabReleaseNotes: "What’s New",
-        releaseNotesOnUpdateToggle: "Show what’s new after updating",
         minimalWindowPreviews: "Minimal previews",
         minimalWindowPreviewsCaption: "Hide titles, buttons and decorative details in Dock and switcher previews. The selection stays visible.",
         previewSizeLabel: "Preview size",
@@ -2987,25 +2907,10 @@ extension Strings {
         audioPriorityCurrent: "Current",
         audioPriorityCaption: "Devices are selected in priority order. When a higher-priority device connects, it becomes active. When the active one disconnects, the next available takes over.",
 
-        updatesSection: "Updates",
         autoCheckToggle: "Check for updates automatically",
-        includeBetaUpdatesToggle: "Receive beta updates",
-        includeBetaUpdatesCaption: "Beta versions include features in development and may contain bugs or incomplete behavior.",
         betaBadgeLabel: "Beta",
-        checkNowButton: "Check now",
-        updateChecking: "Checking…",
-        updateUpToDate: "You’re on the latest version.",
-        updateAvailablePrefix: "Update available:",
-        updateInstallButton: "Download and install",
-        updateDownloading: "Downloading update…",
-        updateInstalling: "Installing and restarting…",
-        updateFailedPrefix: "Couldn’t check:",
-        updateLastChecked: "Last checked:",
-        updateNotifyTitle: "Vorssaint update",
-        updateInstallFailedBody: "The update was downloaded but could not be applied. Download the latest version from the GitHub releases page and drag the app over the current one.",
         updateNeedsApplicationsTitle: "Move Vorssaint to Applications",
         updateNeedsApplicationsBody: "The app is running from a place that cannot be updated, such as the disk image or a temporary system location. Drag Vorssaint to the Applications folder, open it from there and try again.",
-        menuCheckUpdates: "Check for updates…",
 
         permissionRequired: "Permission required",
         permissionAccessibility: "Accessibility",
@@ -3152,8 +3057,6 @@ extension Strings {
         monitorGraphsSection: "Graphs",
         monitorGraphsCaption: "Choose which metrics show a graph over time.",
 
-        updateBannerTitle: "Update available",
-        updateBannerAction: "Update",
         obStepMenuBarTitle: "Metrics in the menu bar",
         obStepMenuBarBody: "Pick what to show next to the icon. The preview above updates live.",
         obStepMenuBarNote: "New: Network and Power blocks and graphs in the panel. Fine-tune it all later in Settings › Monitor.",
@@ -3265,10 +3168,6 @@ extension Strings {
         homebrewOfficialIntroMigrationTitle: "Used the old tap?",
         homebrewOfficialIntroMigrationMessage: "Remove the tap once. The app and your settings stay in place.",
         homebrewOfficialIntroCopyButton: "Copy command",
-        updateShowcaseTitle: "What’s new in 3.1.4",
-        updateShowcaseMessage: "Take a quick look at the main improvements in this update.",
-        updateShowcaseUnavailable: "The video could not load right now. You can still continue.",
-        updateShowcaseRestart: "Restart",
         showMenuBarIcon: "Show menu bar icon",
         menuBarIconStillHiddenTitle: "The icon is still hidden",
         menuBarIconStillHiddenBody: "The icon was rebuilt, but macOS did not give it a visible spot. The menu bar is probably out of room: remove some menu bar icons (or close apps with long menus) and try again.",
@@ -3359,22 +3258,6 @@ extension Strings {
         qrResultTitle: "QR code",
         qrResultCopy: "Copy",
         qrResultOpen: "Open link",
-        highlightsTitle: "New in this update",
-        highlightsTitleClipboardRedesign: "Redesigned clipboard",
-        highlightsTitleWindowLayout: "Window Layout",
-        highlightsTitleQuitProtection: "Quit and close protection",
-        highlightsTitleRecorderBlur: "Recording privacy blur",
-        highlightsCaptionDockPreview: "Dock Preview now works with Dock magnification turned on",
-        highlightsCaptionScreenshot: "The screenshot tool gained a pixel loupe and QR code reading",
-        highlightsCaptionSnippetLibrary: "A searchable snippet menu types any snippet right at your cursor",
-        highlightsCaptionCapturePalette: "One shortcut now opens a floating palette for screenshots, recordings, screen text and colors with nearby controls.",
-        highlightsCaptionClipboardRedesign: "Clipboard history now opens as a compact palette with uncluttered rows and an on-demand preview for reading or editing the full item.",
-        highlightsCaptionWindowLayout: "Position windows with the directional ring using a shortcut and pointer, or drag to screen edges to snap with custom gaps.",
-        highlightsCaptionQuitProtection: "Avoid quitting apps or closing windows by accident with a hold, a double press or an extra modifier, customizable per app.",
-        highlightsCaptionRecorderBlur: "Hide private details, passwords and sensitive areas anywhere across your recorded video before sharing or exporting.",
-        highlightsConfigure: "Set up",
-        highlightsTry: "Try it",
-        highlightsSeeAll: "See all changes",
         switcherCurrentSpaceOnly: "Show only the current desktop",
         switcherCurrentSpaceOnlyCaption: "Lists only windows from the desktop you are on. Picking a window never moves you to another desktop.",
         shelfFileMissing: "The file no longer exists",

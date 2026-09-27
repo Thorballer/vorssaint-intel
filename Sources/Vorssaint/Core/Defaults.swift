@@ -17,10 +17,6 @@ enum DefaultsKey {
     static let featuresOnboardingVersion = "featuresOnboardingVersion" // last feature-tour marker handled
     static let lastUpdateIntroVersion = "lastUpdateIntroVersion"
     static let supportUpdateIntroVersion = "supportUpdateIntroVersion"
-    static let updateHighlightsSeenVersion = "updateHighlightsSeenVersion"
-    static let brightnessUpdatePromptState = "brightnessUpdatePromptState"
-    static let updateShowcaseIntroVersion = "updateShowcaseIntroVersion"
-    static let updateShowcaseMediaOverride = "updateShowcaseMediaOverride"
     static let defaultDuration = "defaultDurationMinutes" // 0 = indefinite
     static let batteryLimit = "batteryLimitPercent"       // 0 = never
     static let keepAwakeAutoStart = "keepAwakeAutoStart"  // start Keep Awake when the app launches
@@ -127,9 +123,6 @@ enum DefaultsKey {
     static let middleClickTapFingers = "middleClickTapFingers"  // 0 = off (default); 3 or 4 = a light tap with that many fingers also middle-clicks (issue #161)
     static let previewSize = "previewSize"                // dock preview thumbnail size (once shared with the app switcher)
     static let switcherPreviewSize = "switcherPreviewSize" // app switcher thumbnail size
-    static let autoCheckUpdates = "autoCheckUpdates"
-    static let includeBetaUpdates = "includeBetaUpdates"
-    static let releaseNotesOnUpdate = "releaseNotesOnUpdate" // show What's New after an update
     static let appVolumes = "appVolumes"                  // [bundle id: 0...2]
     static let appOutputDevices = "appOutputDevices"      // [bundle id: audio device UID]
     static let mixerShowFinder = "mixerShowFinder"
@@ -462,7 +455,6 @@ enum DefaultsKey {
     static let panelDiskOrder = "panelDiskOrder"
     static let panelPowerOrder = "panelPowerOrder"
     static let panelNavigationEnabled = "panelNavigationEnabled" // legacy: the panel always navigates by sections since 3.1.8
-    static let updateLastInstallFailure = "updateLastInstallFailure" // last installer step that failed (fail-copy etc.)
     static let windowLayoutHiddenActions = "windowLayoutHiddenActions" // comma-separated action ids hidden from the grid
     static let windowLayoutWindowGap = "windowLayoutWindowGap" // px between adjacent snapped windows
     static let windowLayoutScreenGap = "windowLayoutScreenGap" // px between a snapped window and the visible frame edge
@@ -845,8 +837,6 @@ enum DefaultsKey {
     static let radialMenuItems = "radialMenuItems"        // Data: [RadialMenuItem] JSON
     static let radialMenuProfiles = "radialMenuProfiles"  // Data: [RadialMenuProfile] JSON
 
-    // Dev-build only: force the "update available" UI for local testing.
-    static let simulateUpdate = "simulateUpdate"
     static let simulateBetaUI = "simulateBetaUI"
 
     /// Features hub availability layer, one key per AppFeature raw value.
@@ -861,50 +851,6 @@ enum OnboardingInfo {
     // 3: app languages and support settings.
     // 4: navigable menu panel sections.
     static let currentFeatureSet = 4
-}
-
-/// The one-time tour of a release's headline features, shown right after the
-/// update. Each row deep links to the exact Settings page or opens the tool
-/// itself, so a new feature is one click from being tried instead of buried.
-enum UpdateHighlightsInfo {
-    /// One tour shared by the betas of this release.
-    static let releaseVersion = "3.4.0-beta.1"
-
-    static func matchesRelease(_ appVersion: String) -> Bool {
-        guard let version = UpdateServiceSupport.SemanticVersion(raw: appVersion),
-              let release = UpdateServiceSupport.SemanticVersion(raw: releaseVersion),
-              (version.major, version.minor, version.patch) == (release.major, release.minor, release.patch),
-              (2...3).contains(version.prerelease.count), version.prerelease[0].description == "beta",
-              let number = Int(version.prerelease[1].description) else { return false }
-        if version.prerelease.count == 3 {
-            guard case let .numeric(hotfix) = version.prerelease[2], hotfix >= 0 else { return false }
-        }
-        return number >= 1
-    }
-
-    static func shouldShow(appVersion: String, lastSeenVersion: String?) -> Bool {
-        matchesRelease(appVersion) && lastSeenVersion != releaseVersion
-    }
-}
-
-/// A single invitation for existing Dynamic Island users to turn on display
-/// controls after updating. "pending" survives a launch interrupted before
-/// the invitation can be shown; "handled" prevents future updates replaying it.
-enum BrightnessUpdatePromptInfo {
-    static let pending = "pending"
-    static let handled = "handled"
-
-    static func isUpgrade(appVersion: String, previousVersion: String?) -> Bool {
-        guard let previousVersion,
-              let previous = UpdateServiceSupport.SemanticVersion(raw: previousVersion),
-              let current = UpdateServiceSupport.SemanticVersion(raw: appVersion) else { return false }
-        return current > previous
-    }
-
-    static func needsSetup(notchAvailable: Bool, brightnessAvailable: Bool,
-                           notchEnabled: Bool, notchBrightness: Bool, brightnessEnabled: Bool) -> Bool {
-        notchAvailable && brightnessAvailable && notchEnabled && notchBrightness && !brightnessEnabled
-    }
 }
 
 enum SupportUpdateIntroInfo {
@@ -1164,11 +1110,6 @@ enum Defaults {
         DefaultsKey.middleClickTapFingers: 0,
         DefaultsKey.previewSize: "normal",
         DefaultsKey.switcherPreviewSize: "normal",
-        DefaultsKey.autoCheckUpdates: true,
-        DefaultsKey.includeBetaUpdates: false,
-        DefaultsKey.releaseNotesOnUpdate: true,
-        DefaultsKey.updateShowcaseIntroVersion: "",
-        DefaultsKey.updateShowcaseMediaOverride: "",
         DefaultsKey.mixerShowFinder: true,
         DefaultsKey.mixerHideInactiveApps: false,
         DefaultsKey.mixerAppArrangement: "",
@@ -1774,7 +1715,6 @@ enum Defaults {
         migrateSwitcherPreviewSize(in: defaults)
         defaults.register(defaults: registeredDefaults)
         defaults.register(defaults: AppFeature.availabilityDefaults)
-        activateBetaChannelIfRunningBeta(in: defaults)
         migrateLegacyMenuBarTemperatureMetric(in: defaults)
         migrateLegacySwitcherWindowShortcut(in: defaults)
         migrateLegacyKeyboardDebounceWindow(in: defaults)
@@ -1881,22 +1821,6 @@ enum Defaults {
         guard defaults.object(forKey: DefaultsKey.monitorPwrTemperature) == nil else { return }
         defaults.set(defaults.object(forKey: DefaultsKey.monitorSysTemps) as? Bool ?? true,
                      forKey: DefaultsKey.monitorPwrTemperature)
-    }
-
-    /// When the user installs or runs a beta pre-release, activate the beta
-    /// channel default once so they seamlessly receive subsequent beta builds.
-    static func activateBetaChannelIfRunningBeta(in defaults: UserDefaults,
-                                                 version: String = AppInfo.version,
-                                                 isBeta: Bool = AppInfo.isBeta) {
-        let isPre = isBeta || {
-            let v = version.lowercased()
-            return v.contains("-beta") || v.contains("-rc") || v.contains("-alpha")
-        }()
-        guard isPre else { return }
-        let markerKey = "betaChannelActivatedFor.\(version)"
-        guard !defaults.bool(forKey: markerKey) else { return }
-        defaults.set(true, forKey: markerKey)
-        defaults.set(true, forKey: DefaultsKey.includeBetaUpdates)
     }
 
     /// The downloads cleanup for a messaging app used to sit in Cleaner for

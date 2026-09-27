@@ -237,17 +237,6 @@ enum LocalizationFeatureContractTests {
                                    strings.cleaningOverlayMouseHint, strings.cleaningPanelCaption]
             suite.expect(cleaningStrings.allSatisfy { !$0.isEmpty && !$0.contains("—") },
                    "\(prefix) cleaning mode strings are present without em dash")
-            let highlightsStrings = [strings.highlightsTitle, strings.highlightsTitleClipboardRedesign,
-                                     strings.highlightsCaptionDockPreview,
-                                     strings.highlightsCaptionScreenshot,
-                                     strings.highlightsCaptionSnippetLibrary,
-                                     strings.highlightsCaptionCapturePalette,
-                                     strings.highlightsCaptionClipboardRedesign,
-                                     strings.highlightsConfigure,
-                                     strings.highlightsTry, strings.highlightsSeeAll,
-                                     strings.reviewIntro, strings.reviewHighlights]
-            suite.expect(highlightsStrings.allSatisfy { !$0.isEmpty && !$0.contains("—") },
-                   "\(prefix) update highlights strings are present without em dash")
             let officialHomebrewIntroStrings = [
                 strings.homebrewOfficialIntroTitle,
                 strings.homebrewOfficialIntroMessage,
@@ -308,10 +297,6 @@ enum LocalizationFeatureContractTests {
                        && strings.discordIntroMessage.contains("em desenvolvimento"),
                        "Portuguese Discord introduction says the community is new and in development")
             }
-            suite.expect(!strings.updateShowcaseTitle.isEmpty, "\(prefix) update showcase title is present")
-            suite.expect(!strings.updateShowcaseMessage.isEmpty, "\(prefix) update showcase message is present")
-            suite.expect(!strings.updateShowcaseUnavailable.isEmpty, "\(prefix) update showcase fallback is present")
-            suite.expect(!strings.updateShowcaseRestart.isEmpty, "\(prefix) update showcase restart control is present")
             suite.expect(!strings.homebrewConfirmUpgradeAllTitle.isEmpty, "\(prefix) Homebrew update all confirmation title is present")
             suite.expect(!strings.homebrewConfirmUpgradeAllBody.isEmpty, "\(prefix) Homebrew update all confirmation body is present")
             suite.expect(!strings.homebrewConfirmUpdateHomebrewTitle.isEmpty, "\(prefix) Homebrew update Homebrew confirmation title is present")

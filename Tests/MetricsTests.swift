@@ -45,7 +45,6 @@ struct MetricsTests {
             ("updates", {
                 UpdateFeatureTests.run(suite)
                 PostUpdateStatusItemRecoveryTests.run(suite)
-                UpdateAdminInstallContract.run(suite)
             }),
             ("repository", { RepositoryFeatureTests.run(suite) }),
             ("screenshots", {

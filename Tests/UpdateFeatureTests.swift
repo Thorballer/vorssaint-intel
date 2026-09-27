@@ -258,20 +258,6 @@ enum UpdateFeatureTests {
                                                        expectedBytes: nil),
                "a plausible body with no advertised size is accepted")
 
-        // The showcase loader is a @StateObject, so it can be released without
-        // `.onDisappear` running. Its session holds the download delegate, and
-        // that delegate's deinit is what deletes the scratch file, so the
-        // release path has to invalidate the session too.
-        let showcaseSource = (try? String(
-            contentsOfFile: "Sources/Vorssaint/Services/Update/UpdateShowcaseMedia.swift",
-            encoding: .utf8)) ?? ""
-        let showcaseDeinitBody = (showcaseSource.components(separatedBy: "\n    deinit {")
-            .dropFirst().first ?? "").components(separatedBy: "\n    }").first ?? ""
-        suite.expect(showcaseDeinitBody.contains("session?.invalidateAndCancel()"),
-               "a released showcase loader invalidates its session, freeing the delegate and its scratch file")
-        suite.expect(!showcaseDeinitBody.contains("finishTasksAndInvalidate"),
-               "a released showcase loader cancels its download instead of letting it finish")
-
         suite.expect(SettingsSearchSupport.matches(query: "", title: "Monitor"),
                "a blank settings search matches everything")
         suite.expect(SettingsSearchSupport.matches(query: "moni", title: "Monitor"),
@@ -1146,38 +1132,11 @@ enum UpdateFeatureTests {
         suite.expect(!UpdateServiceSupport.sha256Matches(Data("abc".utf8), expectedHex: "invalid"),
                "update media rejects a malformed pinned digest")
 
-        // Defaults registered
-        suite.expect(Defaults.registeredDefaults[DefaultsKey.includeBetaUpdates] as? Bool == false,
-               "includeBetaUpdates defaults to false in registeredDefaults")
-
-        let testDefaults = UserDefaults(suiteName: "com.vorssaint.tests.betaActivation")!
-        testDefaults.removePersistentDomain(forName: "com.vorssaint.tests.betaActivation")
-        Defaults.activateBetaChannelIfRunningBeta(in: testDefaults, version: "3.3.3-beta.1")
-        suite.expect(testDefaults.bool(forKey: DefaultsKey.includeBetaUpdates) == true,
-               "beta channel is activated automatically on a beta build")
-        testDefaults.set(false, forKey: DefaultsKey.includeBetaUpdates)
-        Defaults.activateBetaChannelIfRunningBeta(in: testDefaults, version: "3.3.3-beta.1")
-        suite.expect(testDefaults.bool(forKey: DefaultsKey.includeBetaUpdates) == false,
-               "manual opt-out on a beta build is preserved across launches")
-
-        // Stable version does not activate beta channel
-        let stableDefaults = UserDefaults(suiteName: "com.vorssaint.tests.stableActivation")!
-        stableDefaults.removePersistentDomain(forName: "com.vorssaint.tests.stableActivation")
-        Defaults.activateBetaChannelIfRunningBeta(in: stableDefaults, version: "3.3.3")
-        suite.expect(stableDefaults.object(forKey: DefaultsKey.includeBetaUpdates) == nil,
-               "stable release does not touch beta channel default")
-        stableDefaults.removePersistentDomain(forName: "com.vorssaint.tests.stableActivation")
-        testDefaults.removePersistentDomain(forName: "com.vorssaint.tests.betaActivation")
-
         // Localization completeness & formatting
         let originalLanguage = L10n.shared.language
         for language in AppLanguage.allCases {
             L10n.shared.language = language
             let s = L10n.shared.s
-            suite.expect(!s.includeBetaUpdatesToggle.isEmpty, "\(language.rawValue) includeBetaUpdatesToggle non-empty")
-            suite.expect(!s.includeBetaUpdatesCaption.isEmpty, "\(language.rawValue) includeBetaUpdatesCaption non-empty")
-            suite.expect(!s.betaBadgeLabel.isEmpty, "\(language.rawValue) betaBadgeLabel non-empty")
-            suite.expect(!s.includeBetaUpdatesCaption.contains("—"), "\(language.rawValue) has no em dash")
         }
         L10n.shared.language = originalLanguage
 

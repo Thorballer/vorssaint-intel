@@ -443,23 +443,6 @@ def main():
               .replace("private var", "var", 1).replace("NotchSupport.controls()", "controls")
               .replace("NotchTimerService.shared", "NotchCompactTests.NotchTimerService.shared")
           + "}\n")
-    update = "Sources/Vorssaint/Services/Update/UpdateService.swift"
-    update_view = "Sources/Vorssaint/UI/Notch/NotchUpdateControl.swift"
-    write("NotchUpdate.swift", "import AppKit\nimport SwiftUI\nimport Combine\nextension NotchUpdateTests {\n"
-          + "final class UpdateService: ObservableObject {\nstatic let shared = UpdateService()\n"
-          + declaration(update, "    enum State:")
-          + "@Published var state: State = .idle\n}\n"
-          + "final class L10n: ObservableObject {\nstatic let shared = L10n()\n@Published var language = AppLanguage.enUS\n"
-          + declaration("Sources/Vorssaint/Core/Localization.swift", "    var s: Strings")
-          + "}\nfinal class Service: State {\n"
-          + declaration(notch, "    func showUpdate()")
-          + "}\n"
-          + declaration(update_view, "struct NotchUpdateControl:")
-          + "}\n")
-    write("UpdateAdminInstall.swift", "import Foundation\n\nextension UpdateAdminInstallContract {\n"
-          + "final class Service: Fixture {\n"
-          + declaration(update, "    private func launchAdminInstaller(").replace("private ", "", 1)
-          + "}\n}\n")
     canvas = "Sources/Vorssaint/Services/Notch/NotchWindowHost.swift"
     write("NotchHover.swift", "import AppKit\nextension NotchHoverTests {\nfinal class Service: State {\n"
           + declaration(notch, "    func show(_ incoming:").replace("NotchSupport.routes(incoming.event)", "true")

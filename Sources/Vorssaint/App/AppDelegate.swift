@@ -32,10 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     private var feedbackWindow: NSWindow?
     private var onboardingWindow: NSWindow?
     private var supportIntroWindow: NSWindow?
-    private var updateHighlightsWindow: NSWindow?
     private var supportIntroCanClose = false
-    private var updateShowcaseWindow: NSWindow?
-    private var updatePreviewWindow: NSWindow?
 
     // MARK: - Lifecycle
 
@@ -142,7 +139,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         if AppFeature.monitorPower.isAvailable, PowerSampler.hasInternalBattery {
             MaxCapacityProbe.shared.refreshIfStale()
         }
-        UpdateService.shared.startAutomaticChecks()
         NotificationCenter.default.addObserver(self, selector: #selector(appBecameActive),
                                                name: NSApplication.didBecomeActiveNotification, object: nil)
 
@@ -187,26 +183,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         let skipStartupWindows = startupOfPreviousRunDidNotFinish
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            #if VORSSAINT_DEVELOPMENT
-            if CommandLine.arguments.contains("--preview-notch-tour") {
-                self.showUpdateHighlights()
-                return
-            }
-            #endif
             if !defaults.bool(forKey: DefaultsKey.hasOnboarded) {
                 guard !skipStartupWindows else { return }
                 self.showOnboarding(mode: .full)
             } else {
-                // Keep the last seen version marker current without opening
-                // post-update release notes; the update flow already previews
-                // them.
+                // Keep the last seen version marker current.
                 let previousVersion = defaults.string(forKey: DefaultsKey.lastUpdateIntroVersion)
-                self.queueBrightnessUpdatePromptIfNeeded(previousVersion: previousVersion)
                 defaults.set(OnboardingInfo.currentFeatureSet, forKey: DefaultsKey.featuresOnboardingVersion)
                 defaults.set(AppInfo.version, forKey: DefaultsKey.lastUpdateIntroVersion)
-                guard !skipStartupWindows else { return }
                 self.recoverStatusItemAfterUpdate(previousVersion: previousVersion)
-                self.presentUpdateIntros()
             }
         }
     }
@@ -1065,10 +1050,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     }
 
     @objc private func appBecameActive() {
-        // Coming back to the app is a good moment to surface a fresh release.
-        // (Menu bar icon recovery happens on a deliberate reopen, not here: this
-        // fires on every activation, so rebuilding here would cause churn/flicker.)
-        UpdateService.shared.checkIfStale()
         restoreAfterAppUpdateHandoff()
     }
 
@@ -1130,9 +1111,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             NotificationCenter.default.post(name: .menuPanelWillShow, object: nil)
         }
         SystemMonitor.shared.suppressGPUReadsForTransientUI()
-        if !popoverIsSwitchingAnchor {
-            UpdateService.shared.checkIfStale()
-        }
     }
 
     func popoverShouldClose(_ popover: NSPopover) -> Bool {
@@ -1302,10 +1280,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             menu.addItem(shelfItem)
         }
 
-        let updatesItem = NSMenuItem(title: strings.menuCheckUpdates, action: #selector(menuCheckUpdates), keyEquivalent: "")
-        updatesItem.target = self
-        menu.addItem(updatesItem)
-
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(title: strings.menuQuit, action: #selector(quitApp), keyEquivalent: "q")
@@ -1343,11 +1317,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
 
     @objc private func menuOpenShelf() {
         ShelfService.shared.expandDocked()
-    }
-
-    @objc private func menuCheckUpdates() {
-        UpdateService.shared.check(manual: true)
-        openSettingsWindow()
     }
 
     @objc private func quitApp() {
@@ -1801,179 +1770,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         }
     }
 
-    /// Beta updates only introduce their new feature; other update surfaces
-    /// retain their own release gates.
-    private func presentUpdateIntros() {
-        if showUpdateHighlightsIfNeeded() { return }
-        if !AppInfo.isBeta {
-            if showSupportUpdateIntroIfNeeded() { return }
-            if showUpdateShowcaseIntroIfNeeded() { return }
-        }
-        showBrightnessUpdatePromptIfNeeded()
-    }
-
-    private func brightnessSetupNeeded() -> Bool {
-        let defaults = UserDefaults.standard
-        return BrightnessUpdatePromptInfo.needsSetup(
-            notchAvailable: AppFeature.notch.isAvailable,
-            brightnessAvailable: AppFeature.brightness.isAvailable,
-            notchEnabled: defaults.bool(forKey: DefaultsKey.notchEnabled),
-            notchBrightness: defaults.bool(forKey: DefaultsKey.notchBrightness),
-            brightnessEnabled: defaults.bool(forKey: DefaultsKey.brightnessControlEnabled))
-    }
-
-    private func queueBrightnessUpdatePromptIfNeeded(previousVersion: String?) {
-        let defaults = UserDefaults.standard
-        guard defaults.string(forKey: DefaultsKey.brightnessUpdatePromptState) == nil,
-              !AppInfo.isDeveloperBuild,
-              BrightnessUpdatePromptInfo.isUpgrade(appVersion: AppInfo.version,
-                                                   previousVersion: previousVersion) else { return }
-        defaults.set(brightnessSetupNeeded() ? BrightnessUpdatePromptInfo.pending : BrightnessUpdatePromptInfo.handled,
-                     forKey: DefaultsKey.brightnessUpdatePromptState)
-    }
-
-    private func showBrightnessUpdatePromptIfNeeded() {
-        let defaults = UserDefaults.standard
-        guard !isTerminating,
-              defaults.string(forKey: DefaultsKey.brightnessUpdatePromptState)
-                == BrightnessUpdatePromptInfo.pending else { return }
-        guard brightnessSetupNeeded() else {
-            defaults.set(BrightnessUpdatePromptInfo.handled, forKey: DefaultsKey.brightnessUpdatePromptState)
-            return
-        }
-        let language = L10n.shared.language
-        let strings = FeatureStrings.brightness(language)
-        let alert = NSAlert()
-        alert.alertStyle = .informational
-        alert.messageText = strings.islandPromptTitle
-        alert.informativeText = strings.islandPromptMessage
-        alert.addButton(withTitle: FeatureStrings.commandBar(language).actionOpenSettings)
-        // The invitation is not repeated, so the other choice says what stays.
-        alert.addButton(withTitle: strings.islandPromptKeepOff)
-        NSApp.activate(ignoringOtherApps: true)
-        let response = alert.runModal()
-        defaults.set(BrightnessUpdatePromptInfo.handled, forKey: DefaultsKey.brightnessUpdatePromptState)
-        if response == .alertFirstButtonReturn {
-            SettingsRouter.shared.request(AppFeature.brightness.settingsDestination)
-            openSettingsWindow()
-        }
-    }
-
-    private func showUpdateHighlightsIfNeeded() -> Bool {
-        guard UpdateHighlightsInfo.shouldShow(
-            appVersion: AppInfo.version,
-            lastSeenVersion: UserDefaults.standard.string(forKey: DefaultsKey.updateHighlightsSeenVersion)
-        ) else { return false }
-        showUpdateHighlights()
-        return true
-    }
-
-    func showUpdateHighlights() {
-        closePopover()
-        if let window = updateHighlightsWindow {
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
-        let host = NSHostingController(rootView: UpdateHighlightsView(
-            onFinish: { [weak self] in self?.updateHighlightsWindow?.close() }
-        ))
-        host.sizingOptions = .preferredContentSize
-        let window = NSPanel(contentViewController: host)
-        window.title = L10n.shared.s.highlightsTitle
-        window.styleMask = [.titled, .closable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.isReleasedWhenClosed = false
-        window.isRestorable = false
-        window.isMovableByWindowBackground = true
-        window.isFloatingPanel = true
-        window.level = .floating
-        window.hidesOnDeactivate = false
-        window.delegate = self
-        centerIntroWindow(window)
-        updateHighlightsWindow = window
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
-        DispatchQueue.main.async { [weak self, weak window] in
-            guard let self, let window, window === self.updateHighlightsWindow else { return }
-            self.centerIntroWindow(window)
-        }
-    }
-
-    func openSettingsFromHighlights() {
-        openSettingsWindow()
-        // Run after Settings has applied its own initial placement. Ordering the
-        // panel does not take keyboard focus away from the configuration controls.
-        DispatchQueue.main.async { [weak self] in
-            guard let self, let tour = self.updateHighlightsWindow, tour.isVisible else { return }
-            self.positionTourBesideSettings(tour)
-            tour.orderFront(nil)
-        }
-    }
-
-    private func positionTourBesideSettings(_ tour: NSWindow) {
-        guard let settings = settingsWindow, settings.isVisible else { return }
-        let visible = tour.screen?.visibleFrame ?? NSScreen.pointerVisibleFrame
-        let placement = SettingsWindowSupport.tourPlacement(
-            settingsSize: settings.frame.size, tourSize: tour.frame.size, visibleFrame: visible)
-        settings.setFrameOrigin(placement.settings.origin)
-        tour.setFrameOrigin(placement.tour.origin)
-    }
-
-    private func markUpdateHighlightsSeen() {
-        guard UpdateHighlightsInfo.matchesRelease(AppInfo.version) else { return }
-        UserDefaults.standard.set(UpdateHighlightsInfo.releaseVersion,
-                                  forKey: DefaultsKey.updateHighlightsSeenVersion)
-    }
-
-    private func showUpdateShowcaseIntroIfNeeded() -> Bool {
-        guard AppInfo.version == UpdateShowcaseInfo.releaseVersion else {
-            UpdateShowcaseInfo.cleanupCache()
-            return false
-        }
-        guard UserDefaults.standard.string(forKey: DefaultsKey.updateShowcaseIntroVersion)
-                != UpdateShowcaseInfo.releaseVersion else {
-            UpdateShowcaseInfo.cleanupCache()
-            return false
-        }
-        showUpdateShowcaseIntro()
-        return true
-    }
-
-    private func showUpdateShowcaseIntro() {
-        closePopover()
-        if let window = updateShowcaseWindow {
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
-        let host = NSHostingController(rootView: UpdateShowcaseIntroView(
-            onClose: { [weak self] in
-                self?.markUpdateShowcaseIntroSeen()
-                self?.updateShowcaseWindow?.close()
-            }
-        ))
-        host.sizingOptions = .preferredContentSize
-        let window = NSWindow(contentViewController: host)
-        window.title = L10n.shared.s.updateShowcaseTitle
-        window.styleMask = [.titled, .closable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.isReleasedWhenClosed = false
-        window.isRestorable = false
-        window.isMovableByWindowBackground = true
-        window.delegate = self
-        centerIntroWindow(window)
-        updateShowcaseWindow = window
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
-        DispatchQueue.main.async { [weak self, weak window] in
-            guard let self, let window, window === self.updateShowcaseWindow else { return }
-            self.centerIntroWindow(window)
-        }
-    }
-
     private func showSupportUpdateIntroIfNeeded() -> Bool {
         // Same shape as the showcase gate: the window belongs to one specific
         // release. Any other version never shows it, so an update that is not
@@ -2023,7 +1819,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         DispatchQueue.main.async { [weak self, weak window] in
             guard let self, let window, window === self.supportIntroWindow else { return }
             self.centerIntroWindow(window)
-            self.positionTourBesideSettings(window)
         }
     }
 
@@ -2047,48 +1842,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         window.setFrameOrigin(NSPoint(x: x.rounded(), y: y.rounded()))
     }
 
-    /// The pre-install update preview, shown before any download from BOTH the
-    /// Settings install button and the menu panel's update banner (the blue
-    /// button most people use), so the changelog is always seen first. In the
-    /// Developer build `downloadAndInstall()` is a no-op, so confirming is safe.
-    func showUpdatePreview() {
-        guard case let .available(version) = UpdateService.shared.state else { return }
-        closePopover()
-        if let window = updatePreviewWindow {
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
-        let host = NSHostingController(rootView: UpdatePreviewView(
-            version: version,
-            notes: UpdateService.shared.availableNotes,
-            onUpdate: { [weak self] in
-                self?.updatePreviewWindow?.close()
-                UpdateService.shared.downloadAndInstall()
-            },
-            onCancel: { [weak self] in
-                self?.updatePreviewWindow?.close()
-            }
-        ))
-        host.sizingOptions = .preferredContentSize
-        let window = NSWindow(contentViewController: host)
-        window.title = L10n.shared.s.tabReleaseNotes
-        window.styleMask = [.titled, .closable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.isReleasedWhenClosed = false
-        window.isRestorable = false
-        window.isMovableByWindowBackground = true
-        window.delegate = self
-        centerIntroWindow(window)
-        updatePreviewWindow = window
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
-        DispatchQueue.main.async { [weak self, weak window] in
-            guard let self, let window, window === self.updatePreviewWindow else { return }
-            self.centerIntroWindow(window)
-        }
-    }
+
 
     func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
         if sender === settingsWindow {
@@ -2158,24 +1912,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             markSupportUpdateIntroSeen()
             finishedUpdateIntro = true
         }
-        if window === updateShowcaseWindow {
-            updateShowcaseWindow = nil
-            guard !isTerminating else { return }
-            markUpdateShowcaseIntroSeen()
-            finishedUpdateIntro = true
-        }
-        if window === updateHighlightsWindow {
-            updateHighlightsWindow = nil
-            guard !isTerminating else { return }
-            markUpdateHighlightsSeen()
-            finishedUpdateIntro = true
-        }
-        if window === updatePreviewWindow {
-            updatePreviewWindow = nil
-        }
-        if finishedUpdateIntro {
-            DispatchQueue.main.async { [weak self] in self?.showBrightnessUpdatePromptIfNeeded() }
-        }
     }
 
     /// Marks both the first run and this version's feature tour as seen, so
@@ -2187,10 +1923,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         UserDefaults.standard.set(BrightnessUpdatePromptInfo.handled,
                                   forKey: DefaultsKey.brightnessUpdatePromptState)
         markSupportUpdateIntroSeenIfCurrentUpdate()
-        markUpdateShowcaseIntroSeenIfCurrentUpdate()
-        // A clean install that just saw everything in onboarding should not
-        // then get the update tour; only people who updated get it.
-        markUpdateHighlightsSeen()
     }
 
     private func markSupportUpdateIntroSeenIfCurrentUpdate() {
@@ -2202,15 +1934,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
                                   forKey: DefaultsKey.supportUpdateIntroVersion)
     }
 
-    private func markUpdateShowcaseIntroSeenIfCurrentUpdate() {
-        guard AppInfo.version == UpdateShowcaseInfo.releaseVersion else { return }
-        markUpdateShowcaseIntroSeen()
-    }
-
-    private func markUpdateShowcaseIntroSeen() {
-        UserDefaults.standard.set(UpdateShowcaseInfo.releaseVersion,
-                                  forKey: DefaultsKey.updateShowcaseIntroVersion)
-    }
 }
 
 extension AppDelegate: UNUserNotificationCenterDelegate {

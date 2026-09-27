@@ -88,8 +88,6 @@ enum SettingsBackupSupport {
         DefaultsKey.featuresOnboardingVersion,
         DefaultsKey.lastUpdateIntroVersion,
         DefaultsKey.supportUpdateIntroVersion,
-        DefaultsKey.updateHighlightsSeenVersion,
-        DefaultsKey.brightnessUpdatePromptState,
         DefaultsKey.panelCollapsedResetVersion,
     ]
 
@@ -142,9 +140,6 @@ enum SettingsBackupSupport {
         DefaultsKey.wallpaperExcludedOwnPaths,
         // A local watermark file is authority on this Mac, not portable data.
         DefaultsKey.mediaImageWatermarkLogoPath,
-        DefaultsKey.simulateUpdate,
-        DefaultsKey.updateShowcaseIntroVersion,
-        DefaultsKey.updateShowcaseMediaOverride,
         DefaultsKey.unifiedScreenCaptureShortcutMigrated,
         DefaultsKey.restoredScreenCaptureShortcutsMigrated,
         DefaultsKey.orphanedCaptureShortcutMigrated,
