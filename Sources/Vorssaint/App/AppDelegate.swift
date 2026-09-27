@@ -189,6 +189,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             } else {
                 // Keep the last seen version marker current.
                 let previousVersion = defaults.string(forKey: DefaultsKey.lastUpdateIntroVersion)
+                self.queueBrightnessUpdatePromptIfNeeded(previousVersion: previousVersion)
                 defaults.set(OnboardingInfo.currentFeatureSet, forKey: DefaultsKey.featuresOnboardingVersion)
                 defaults.set(AppInfo.version, forKey: DefaultsKey.lastUpdateIntroVersion)
                 self.recoverStatusItemAfterUpdate(previousVersion: previousVersion)
@@ -1770,6 +1771,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         }
     }
 
+    private func brightnessSetupNeeded() -> Bool {
+        let defaults = UserDefaults.standard
+        return BrightnessUpdatePromptInfo.needsSetup(
+            notchAvailable: AppFeature.notch.isAvailable,
+            brightnessAvailable: AppFeature.brightness.isAvailable,
+            notchEnabled: defaults.bool(forKey: DefaultsKey.notchEnabled),
+            notchBrightness: defaults.bool(forKey: DefaultsKey.notchBrightness),
+            brightnessEnabled: defaults.bool(forKey: DefaultsKey.brightnessControlEnabled))
+    }
+
+    private func queueBrightnessUpdatePromptIfNeeded(previousVersion: String?) {
+        let defaults = UserDefaults.standard
+        guard defaults.string(forKey: DefaultsKey.brightnessUpdatePromptState) == nil,
+              !AppInfo.isDeveloperBuild,
+              BrightnessUpdatePromptInfo.isUpgrade(appVersion: AppInfo.version,
+                                                   previousVersion: previousVersion) else { return }
+        defaults.set(brightnessSetupNeeded() ? BrightnessUpdatePromptInfo.pending : BrightnessUpdatePromptInfo.handled,
+                     forKey: DefaultsKey.brightnessUpdatePromptState)
+    }
+
+    private func showBrightnessUpdatePromptIfNeeded() {
+        let defaults = UserDefaults.standard
+        guard !isTerminating,
+              defaults.string(forKey: DefaultsKey.brightnessUpdatePromptState)
+                == BrightnessUpdatePromptInfo.pending else { return }
+        guard brightnessSetupNeeded() else {
+            defaults.set(BrightnessUpdatePromptInfo.handled, forKey: DefaultsKey.brightnessUpdatePromptState)
+            return
+        }
+        let language = L10n.shared.language
+        let strings = FeatureStrings.brightness(language)
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = strings.islandPromptTitle
+        alert.informativeText = strings.islandPromptMessage
+        alert.addButton(withTitle: FeatureStrings.commandBar(language).actionOpenSettings)
+        // The invitation is not repeated, so the other choice says what stays.
+        alert.addButton(withTitle: strings.islandPromptKeepOff)
+        NSApp.activate(ignoringOtherApps: true)
+        let response = alert.runModal()
+        defaults.set(BrightnessUpdatePromptInfo.handled, forKey: DefaultsKey.brightnessUpdatePromptState)
+        if response == .alertFirstButtonReturn {
+            SettingsRouter.shared.request(AppFeature.brightness.settingsDestination)
+            openSettingsWindow()
+        }
+    }
+
     private func showSupportUpdateIntroIfNeeded() -> Bool {
         // Same shape as the showcase gate: the window belongs to one specific
         // release. Any other version never shows it, so an update that is not
@@ -1911,6 +1959,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             guard !isTerminating else { return }
             markSupportUpdateIntroSeen()
             finishedUpdateIntro = true
+        }
+        if finishedUpdateIntro {
+            DispatchQueue.main.async { [weak self] in self?.showBrightnessUpdatePromptIfNeeded() }
         }
     }
 
