@@ -62,7 +62,10 @@ FAN_HELPER_ID="$APP_BUNDLE_ID.fan-control"
 # Sources/NowPlayingAdapter. Staged under Contents/Frameworks, signed on its own.
 NOW_PLAYING_ADAPTER_ID="$APP_BUNDLE_ID.now-playing"
 NOW_PLAYING_ADAPTER="libVorssaintNowPlaying.dylib"
-TARGET="arm64-apple-macosx14.0"
+# Intel build: compile for x86_64 so the app runs on Intel Macs. All sources
+# compile from scratch (no vendored binaries), so the target triple is the
+# only arch-sensitive knob; see INTEL-AUDIT.md.
+TARGET="x86_64-apple-macosx14.0"
 ENTITLEMENTS="Resources/Vorssaint.entitlements"
 LEGACY_IDENTITY="Vorssaint Utils Signing"
 
